@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:personal_finance/routes/screen_routes.dart';
-import 'package:personal_finance/widgets/textformfeild.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:personal_finance/widgets/custom_textformfeild.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import '../providers/login_providers.dart';
+import '../routes/screen_routes.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends ConsumerWidget {
   LoginScreen({super.key});
 
   final TextEditingController email = TextEditingController();
@@ -13,12 +15,13 @@ class LoginScreen extends StatelessWidget {
   final formKey = GlobalKey<FormState>();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context , WidgetRef ref) {
+    final boxHeight = ref.watch(loginBoxHeightProvider);
     return Scaffold(
       body: Center(
         child: SizedBox(
           width: 300,
-          height: 410,
+          height: boxHeight,
           child: SingleChildScrollView(
             child: Card(
               elevation: 20,
@@ -64,7 +67,8 @@ class LoginScreen extends StatelessWidget {
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          if (formKey.currentState!.validate()) {
+                          if (!formKey.currentState!.validate()) {
+                            ref.read(loginBoxHeightProvider.notifier).state=500;
                             return;
                           }
                         },

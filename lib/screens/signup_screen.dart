@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:personal_finance/models/signup_result_model.dart';
-import 'package:personal_finance/providers/signup_isloading_provider.dart';
+import 'package:personal_finance/providers/signup_provider.dart';
 import 'package:personal_finance/routes/screen_routes.dart';
-import 'package:personal_finance/widgets/textformfeild.dart';
-import 'package:personal_finance/services/signup_page/signup_user.dart';
+import 'package:personal_finance/widgets/custom_textformfeild.dart';
+import 'package:personal_finance/services/signup_page/signup_user_method.dart';
 
 class SignUpScreen extends ConsumerWidget {
   SignUpScreen({super.key});
@@ -24,12 +24,13 @@ class SignUpScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context , WidgetRef ref) {
     final isLoading = ref.watch(isloadingProvider);
+    final boxHeight = ref.watch(signupBoxHeightProvider);
     return Stack(children: [
       Scaffold(
       body: Center(
         child: SizedBox(
           width: 300,
-          height: 440,
+          height: boxHeight,
           child: SingleChildScrollView(
             child: Card(
               elevation: 20,
@@ -94,6 +95,7 @@ class SignUpScreen extends ConsumerWidget {
                         onPressed: () async {
 
                           if (!formKey.currentState!.validate()) {
+                            ref.read(signupBoxHeightProvider.notifier).state=530;
                             return;
                           }
                           ref.read(isloadingProvider.notifier).state = true;
@@ -103,16 +105,18 @@ class SignUpScreen extends ConsumerWidget {
                               name.text.trim());
 
                           if (signupResult!.message == null) {
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text('Signup Successfull')));
 
                                     ref.read(isloadingProvider.notifier).state = false;
-
+                            if (!context.mounted) return;
                             Navigator.pushReplacementNamed(
                                 context, RouteName.dashboard,
                                 arguments: {'uid': signupResult.uid});
                           } else {
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                 content: Text(signupResult.message ??
                                     'Unable to fetch Exception')));

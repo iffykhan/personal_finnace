@@ -5,7 +5,6 @@ final FirebaseAuth auth = FirebaseAuth.instance;
 Future<SignupResult?> signupUser(
     String email, String password, String name) async {
   try {
-    
     final UserCredential userCredential = await auth
         .createUserWithEmailAndPassword(email: email, password: password);
     final User? user = userCredential.user;
