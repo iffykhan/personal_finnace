@@ -1,7 +1,7 @@
-class SignupResult {
+class SignupAndLoginResult {
   final String? uid;
   final String? message;
 
-  SignupResult({ this.uid,  this.message});
+  SignupAndLoginResult({ this.uid,  this.message});
 
 }

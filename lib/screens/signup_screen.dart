@@ -8,22 +8,16 @@ import 'package:personal_finance/services/signup_page/signup_user_method.dart';
 
 class SignUpScreen extends ConsumerWidget {
   SignUpScreen({super.key});
-
-  final TextEditingController email = TextEditingController();
-
-  final TextEditingController password = TextEditingController();
-
-  final TextEditingController name = TextEditingController();
-
-  final TextEditingController cPassword = TextEditingController();
-
   final formKey = GlobalKey<FormState>();
   
   
 
   @override
   Widget build(BuildContext context , WidgetRef ref) {
-    final isLoading = ref.watch(isloadingProvider);
+    final email = ref.watch(emailControllerProvider);
+    final password=ref.watch(passwordControllerProvider);
+    final cPassword= ref.watch(cpasswordControllerProvider);
+    final name = ref.watch(nameControllerProvider);
     final boxHeight = ref.watch(signupBoxHeightProvider);
     return Stack(children: [
       Scaffold(
@@ -92,38 +86,7 @@ class SignUpScreen extends ConsumerWidget {
                         height: 10,
                       ),
                       ElevatedButton(
-                        onPressed: () async {
-
-                          if (!formKey.currentState!.validate()) {
-                            ref.read(signupBoxHeightProvider.notifier).state=530;
-                            return;
-                          }
-                          ref.read(isloadingProvider.notifier).state = true;
-                          final SignupResult? signupResult = await signupUser(
-                              email.text.trim(),
-                              password.text.trim(),
-                              name.text.trim());
-
-                          if (signupResult!.message == null) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Signup Successfull')));
-
-                                    ref.read(isloadingProvider.notifier).state = false;
-                            if (!context.mounted) return;
-                            Navigator.pushReplacementNamed(
-                                context, RouteName.dashboard,
-                                arguments: {'uid': signupResult.uid});
-                          } else {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text(signupResult.message ??
-                                    'Unable to fetch Exception')));
-
-                                    ref.read(isloadingProvider.notifier).state = false;
-                          }
-                        },
+                        onPressed: () => singupPressed(ref,context),
                         style: ElevatedButton.styleFrom(
                             elevation: 5,
                             minimumSize: Size(220, 38),
@@ -168,15 +131,20 @@ class SignUpScreen extends ConsumerWidget {
         ),
       ),
     ),
-     if (isLoading)
-          Positioned.fill(
-              child: Container(
-            color: Colors.black54,
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          )),
-    ],);
+      Consumer(builder: (context,ref,_){
+        final isLoading = ref.watch(signupIsloadingProvider);
+        if (!isLoading) return SizedBox.shrink();
+        return Positioned.fill(
+            child: Container(
+              color: Colors.black54,
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+        );
+      })
+    ]
+      );
   }
 
   String? emailValidator(String? input) {
@@ -201,11 +169,11 @@ class SignUpScreen extends ConsumerWidget {
   }
 
   String? cpasswordValidator(String? input, String password) {
-    if (input != password) {
-      return 'Password and confirm password doesn,t match';
-    }
     if (input == null || input.isEmpty) {
       return 'Please enter confirm password';
+    }
+    if (input != password ) {
+      return 'Password and confirm password doesn,t match';
     }
     return null;
   }
@@ -215,5 +183,49 @@ class SignUpScreen extends ConsumerWidget {
       return 'Please enter your name';
     }
     return null;
+  }
+
+  void singupPressed(WidgetRef ref, BuildContext context) async {
+    if (!formKey.currentState!.validate()) {
+      ref.read(signupBoxHeightProvider.notifier).state=530;
+      return;
+    }
+    ref.read(signupIsloadingProvider.notifier).state = true;
+
+    final email = ref.read(emailControllerProvider);
+    final password = ref.read(passwordControllerProvider);
+    final name = ref.read(nameControllerProvider);
+
+    try {
+      final SignupAndLoginResult signupResult = await signupUser(
+          email.text.trim(),
+          password.text.trim(),
+          name.text.trim());
+
+      if (signupResult.uid != null) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Signup Successfull')));
+        Navigator.pushReplacementNamed(
+            context, RouteName.dashboardScreen);
+      }
+      else if(signupResult.message != null){
+        if(!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(signupResult.message!)));
+      }
+      else{
+        if(!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Exception occured')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error ${e.toString()}')));
+    }
+    finally {
+      ref.read(signupIsloadingProvider.notifier).state = false;
+    }
   }
 }
