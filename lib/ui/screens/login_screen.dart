@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:personal_finance/models/signup_result_model.dart';
 import 'package:personal_finance/services/login_page/login_user_method.dart';
-import 'package:personal_finance/widgets/custom_textformfeild.dart';
+import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import '../providers/login_providers.dart';
-import '../routes/screen_routes.dart';
+import '../../providers/login_providers.dart';
+import '../../routes/screen_routes.dart';
 
 class LoginScreen extends ConsumerWidget {
   LoginScreen({super.key});

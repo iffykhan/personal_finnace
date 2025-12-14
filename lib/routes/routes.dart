@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:personal_finance/routes/screen_routes.dart';
-import 'package:personal_finance/screens/dashboard_screen.dart';
-import 'package:personal_finance/screens/login_screen.dart';
-import 'package:personal_finance/screens/signup_screen.dart';
+import 'package:personal_finance/ui/screens/dashboard_screen.dart';
+import 'package:personal_finance/ui/screens/login_screen.dart';
+import 'package:personal_finance/ui/screens/signup_screen.dart';
 
 class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:personal_finance/routes/routes.dart';
@@ -13,15 +14,18 @@ void main() async {
   runApp(ProviderScope(child: const MyApp()));
 }
 
+
+
+
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ProviderScope(
-      child: MaterialApp(debugShowCheckedModeBanner: false,
-       initialRoute: RouteName.loginScreen,
-       onGenerateRoute: Routes.generateRoute),
-    );
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    return MaterialApp(debugShowCheckedModeBanner: false,
+     initialRoute: auth.currentUser == null ? RouteName.loginScreen : RouteName.dashboardScreen,
+     onGenerateRoute: Routes.generateRoute);
   }
 }

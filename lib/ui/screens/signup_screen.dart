@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:personal_finance/models/signup_result_model.dart';
 import 'package:personal_finance/providers/signup_provider.dart';
 import 'package:personal_finance/routes/screen_routes.dart';
-import 'package:personal_finance/widgets/custom_textformfeild.dart';
+import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';
 import 'package:personal_finance/services/signup_page/signup_user_method.dart';
 
 class SignUpScreen extends ConsumerWidget {
