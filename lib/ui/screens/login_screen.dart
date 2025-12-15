@@ -154,9 +154,7 @@ class LoginScreen extends ConsumerWidget {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Login successfully')));
-        ref
-            .read(loginIsloadingProvider.notifier)
-            .state = false;
+        ref.read(loginIsloadingProvider.notifier).state = false;
         Navigator.pushReplacementNamed(
             context, RouteName.dashboardScreen);
       }

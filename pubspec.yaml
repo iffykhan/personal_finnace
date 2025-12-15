@@ -39,6 +39,7 @@ dependencies:
   flutter_signin_button: ^2.1.1
   font_awesome_flutter: ^10.9.1
   firebase_auth: ^6.1.2
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
