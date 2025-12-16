@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:personal_finance/routes/screen_routes.dart';
+import 'package:personal_finance/ui/widgets/dashboard_account_container.dart';
 
 
 class Dashboard extends StatelessWidget {
@@ -11,9 +12,9 @@ class Dashboard extends StatelessWidget {
     final FirebaseAuth auth = FirebaseAuth.instance;
     return Scaffold(
       appBar: AppBar(title: Text(
-          'Welcome ${auth.currentUser?.displayName}' ),
+          'Welcome ${auth.currentUser?.displayName}', style: TextStyle(color: Colors.deepPurple), ),
         actions: [IconButton(onPressed: () => logout(context),
-            icon: Icon(Icons.logout))],),
+            icon: Icon(Icons.logout,color: Colors.deepPurple,))],),
       body: Column(
         children: [
           Card(
@@ -44,43 +45,16 @@ class Dashboard extends StatelessWidget {
                     ),
                   ],
                 ),
-
+                SizedBox(height: 21,),
                 Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: Container(
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('ubl bank',style: TextStyle(color: Colors.white,fontSize: 15),),
-                              Text('\$ 2,000',style: TextStyle(color: Colors.white,fontSize: 15),),
-                            ],
-                          ),
-                        ),
-                      ),
+                      DashboardAccountContainer(account: dummyAccounts[0]),
                       SizedBox(
                         width: 6,
                       ),
-                      Expanded(
-                        child: Container(height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
-                          ),child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('ubl bank',style: TextStyle(color: Colors.white,fontSize: 15),),
-                              Text('\$ 3,000',style: TextStyle(color: Colors.white,fontSize: 15),),
-                            ],
-                          ),
-                        ),
-                      )
+                      DashboardAccountContainer(account: dummyAccounts[1]),
                     ],
                   ),
                 ),
@@ -88,39 +62,11 @@ class Dashboard extends StatelessWidget {
                   padding: const EdgeInsets.all(5.0),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: Container(
-                          padding: EdgeInsets.all(7),height: 60,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.white.withOpacity(0.18),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('ubl bank',style: TextStyle(color: Colors.white,fontSize: 15),),
-                              Text('\$ 6,000',style: TextStyle(color: Colors.white,fontSize: 15),),
-                            ],
-                          ),
-                        ),
-                      ),
+                      DashboardAccountContainer(account: dummyAccounts[2]),
                       SizedBox(
                         width: 6,
                       ),
-                      Expanded(
-                        child: Container(height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('ubl bank',style: TextStyle(color: Colors.white,fontSize: 15),),
-                              Text('\$ 3,000',style: TextStyle(color: Colors.white,fontSize: 15),),
-                            ],
-                          ),
-                        ),
-                      )
+                      DashboardAccountContainer(account: dummyAccounts[3]),
                     ],
                   ),
                 )
@@ -132,7 +78,9 @@ class Dashboard extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: (){},
+        onPressed: (){
+          Navigator.pushNamed(context, RouteName.addTransactionScreen);
+        },
         tooltip: 'Increment',
         backgroundColor: Colors.deepPurple, // Customizes the button's background color
         foregroundColor: Colors.white,
@@ -150,51 +98,39 @@ class Dashboard extends StatelessWidget {
   }
 }
 
+class Account {
+  final String id;
+  final String name;
+  final double balance;
 
+  const Account({
+    required this.id,
+    required this.name,
+    required this.balance,
+  });
+}
 
+const dummyAccounts = [
+  Account(id: 'a1', name: 'Cash', balance: 1240.50),
+  Account(id: 'a2', name: 'Bank', balance: 2469.50),
+  Account(id: 'a3', name: 'Savings', balance: 8900.00),
+  Account(id: 'a4', name: 'Business', balance: 64495.00),
+];
 
-
-
-//
-// Widget _accountChip(String title) {
-//   return Expanded(
-//     child: Container(
-//       //padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-//       decoration: BoxDecoration(
-//         color: Colors.white.withOpacity(0.2),
-//         borderRadius: BorderRadius.circular(5),
-//       ),
-//       child: Text(
-//         title,
-//         style: const TextStyle(
-//           color: Colors.white,
-//           fontSize: 20,
-//           fontWeight: FontWeight.w500,
-//         ),
-//       ),
-//     ),
-//   );
-// }
-//
-// Widget _addAccountChip() {
-//   return Expanded(
-//     child: Container(
-//       //padding: const EdgeInsets.all(8),
-//       decoration: BoxDecoration(
-//         color: Colors.white.withOpacity(0.2),
-//         borderRadius: BorderRadius.circular(5),
-//       ),
-//       child: Center(
-//         child: Text(
-//           '+',
-//           style: const TextStyle(
-//             color: Colors.white,
-//             fontSize: 20,
-//             fontWeight: FontWeight.w500,
-//           ),
-//         ),
-//       ),
-//     ),
-//   );
-// }
-//
+const dummyTransactions = [
+  {
+    'accountId': 'a2',
+    'title': 'Groceries',
+    'amount': -120.0,
+  },
+  {
+    'accountId': 'a2',
+    'title': 'Salary',
+    'amount': 2500.0,
+  },
+  {
+    'accountId': 'a2',
+    'title': 'Transport',
+    'amount': -80.5,
+  },
+];
