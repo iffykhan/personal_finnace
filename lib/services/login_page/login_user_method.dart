@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:personal_finance/models/signup_result_model.dart';
+import 'package:personal_finance/models/signup_page/signup_result_model.dart';
 
 final FirebaseAuth auth = FirebaseAuth.instance;
 

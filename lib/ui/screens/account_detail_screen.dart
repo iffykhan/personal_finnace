@@ -1,26 +1,28 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dashboard_screen.dart';
+import 'package:personal_finance/routes/screen_routes.dart';
+import '../../models/dashboard_page/account_model.dart';
 
-// Account Class in dashboard
+
 
 class AccountDetailScreen extends ConsumerWidget {
   final Account account;
 
   const AccountDetailScreen({
-    super.key,
-    required this.account,
+    super.key,required this.account
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final transactions = dummyTransactions
-        .where((t) => t['accountId'] == account.id)
-        .toList();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(account.name),
+        actions: [
+          IconButton( onPressed:()=> deleteAccount(context), icon: Icon(Icons.delete))
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,37 +63,31 @@ class AccountDetailScreen extends ConsumerWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ),
-
-          const SizedBox(height: 10),
-
-          Expanded(
-            child: transactions.isEmpty
-                ? const Center(child: Text('No transactions'))
-                : ListView.builder(
-              itemCount: transactions.length,
-              itemBuilder: (_, index) {
-                final tx = transactions[index];
-                final amount = tx['amount'] as double;
-
-                return ListTile(
-                  title: Text(tx['title'].toString()),
-                  trailing: Text(
-                    amount > 0
-                        ? '+\$${amount.toStringAsFixed(2)}'
-                        : '-\$${amount.abs().toStringAsFixed(2)}',
-                    style: TextStyle(
-                      color: amount > 0
-                          ? Colors.green
-                          : Colors.red,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
         ],
       ),
     );
   }
+  
+   deleteAccount(BuildContext context) {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw 'User not logged in';
+      
+     FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('accounts').doc(account.id).delete();
+
+      Navigator.pushReplacementNamed(context, RouteName.dashboardScreen);
+      
+
+    } catch (e) {
+      if(!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to add account: $e')),
+    );
+    }
+   }
+  
 }
 

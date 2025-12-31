@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:personal_finance/models/signup_result_model.dart';
+import 'package:personal_finance/models/signup_page/signup_result_model.dart';
 import 'package:personal_finance/providers/signup_provider.dart';
 import 'package:personal_finance/routes/screen_routes.dart';
 import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';

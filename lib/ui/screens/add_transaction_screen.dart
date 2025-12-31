@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-// To DO : Add Notes
-
 enum TransactionType { income, transfer, expense }
 
 class AddTransactionScreen extends StatelessWidget {
