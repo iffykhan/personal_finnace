@@ -11,21 +11,32 @@ class AddTransactionScreen extends StatelessWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          //backgroundColor: Colors.deepPurple,
-          title: const Text('Add Transaction',),
-          bottom: const TabBar(
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  Colors.deepPurple,
+                  Colors.deepPurple.withValues(alpha: 0.5)
+                ], begin: Alignment.topCenter, end: Alignment.bottomCenter)
+                ),
+            child: const Center(
+              child: Text('Add Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+          ),
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Income'),
+              Tab(text: 'Expense' ,),
               Tab(text: 'Transfer'),
-              Tab(text: 'Expense'),
+              Tab(text: 'Income'),
             ],
+            labelColor:Colors.black.withValues(alpha:0.60),
+            unselectedLabelColor: Colors.white
           ),
         ),
         body: const TabBarView(
           children: [
-            TransactionTab(type: TransactionType.income),
-            TransactionTab(type: TransactionType.transfer),
             TransactionTab(type: TransactionType.expense),
+            TransactionTab(type: TransactionType.transfer),
+            TransactionTab(type: TransactionType.income),
           ],
         ),
       ),
@@ -50,29 +61,7 @@ class _TransactionTabState extends State<TransactionTab> {
   Category? selectedCategory;
   Account selectedAccount = dummyAccounts.first;
 
-  // void _selectAccount() async {
-  //   final Account? account = await showModalBottomSheet<Account>(
-  //     context: context,
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-  //     ),
-  //     builder: (_) {
-  //       return ListView(
-  //         children: dummyAccounts.map((acc) {
-  //           return ListTile(
-  //             title: Text(acc.name),
-  //             subtitle: Text('Balance: ${acc.balance}'),
-  //             onTap: () => Navigator.pop(context, acc),
-  //           );
-  //         }).toList(),
-  //       );
-  //     },
-  //   );
-  //
-  //   if (account != null) {
-  //     setState(() => selectedAccount = account);
-  //   }
-  // }
+
 
   Future<Account?> _selectAccount({
     required String title,
@@ -221,22 +210,6 @@ class _TransactionTabState extends State<TransactionTab> {
         /// Account & Category row
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          // child: Row(
-          //   children: [
-          //     _SelectorTile(
-          //       label: 'Account',
-          //       value: selectedAccount.name,
-          //       onTap: _selectAccount,
-          //     ),
-          //     const SizedBox(width: 12),
-          //     _SelectorTile(
-          //       label: 'Category',
-          //       value: selectedCategory.name,
-          //       onTap: _selectCategory,
-          //     ),
-          //   ],
-          // )
-
             child: Row(
               children: [
                 /// LEFT
