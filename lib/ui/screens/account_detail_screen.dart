@@ -1,13 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:personal_finance/routes/screen_routes.dart';
+import 'package:personal_finance/services/account_detail_page/delete_account.dart';
 import '../../models/dashboard_page/account_model.dart';
 
 
 
-class AccountDetailScreen extends ConsumerWidget {
+class AccountDetailScreen extends StatelessWidget {
   final Account account;
 
   const AccountDetailScreen({
@@ -15,13 +12,13 @@ class AccountDetailScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
 
     return Scaffold(
       appBar: AppBar(
         title: Text(account.name),
         actions: [
-          IconButton( onPressed:()=> deleteAccount(context), icon: Icon(Icons.delete))
+          IconButton( onPressed:()=> deleteAccount(context,account), icon: Icon(Icons.delete))
         ],
       ),
       body: Column(
@@ -68,26 +65,6 @@ class AccountDetailScreen extends ConsumerWidget {
     );
   }
   
-   deleteAccount(BuildContext context) {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw 'User not logged in';
-      
-     FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('accounts').doc(account.id).delete();
 
-      Navigator.pushReplacementNamed(context, RouteName.dashboardScreen);
-      
-
-    } catch (e) {
-      if(!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to add account: $e')),
-    );
-    }
-   }
-  
 }
 

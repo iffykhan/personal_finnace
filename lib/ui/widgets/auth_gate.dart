@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:personal_finance/providers/authgate_provider.dart';
-import 'package:personal_finance/ui/screens/dashboard_screen.dart';
+import 'package:personal_finance/state/providers/authgate_provider.dart';
+import 'package:personal_finance/ui/screens/dashboard_screen/dashboard_screen.dart';
 import 'package:personal_finance/ui/screens/login_screen.dart';
 
 class AuthGate extends ConsumerWidget {

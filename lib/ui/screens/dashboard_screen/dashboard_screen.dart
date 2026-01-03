@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:personal_finance/providers/dashboard_providers.dart';
+import 'package:personal_finance/services/dashboard_page/logout_user_method.dart';
+import 'package:personal_finance/state/providers/dashboard_providers.dart';
 import 'package:personal_finance/routes/screen_routes.dart';
-import 'package:personal_finance/services/dashboard_page/add_account_method.dart';
-import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';
+import 'package:personal_finance/ui/screens/dashboard_screen/open_dialogue_to_add_account.dart';
 import 'package:personal_finance/ui/widgets/dashboard_account_container.dart';
 
 class Dashboard extends ConsumerWidget {
@@ -14,6 +14,17 @@ class Dashboard extends ConsumerWidget {
   Widget build(BuildContext context,WidgetRef ref) {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final account = ref.watch(accountStreamProvider);
+    final size = MediaQuery.of(context).size;
+    final isLargeScreen = size.width >= 600; // tablet / laptop
+    final isWideScreen = size.width / size.height > 1.2; // landscape or laptop-ish
+
+    final double cardHeight = (isLargeScreen || isWideScreen)
+        ? size.height * 0.60
+        : size.height * 0.35;
+
+    final double gridAspectRatio = (isLargeScreen || isWideScreen) ? 7 : 2.6;
+
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -22,7 +33,7 @@ class Dashboard extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-              onPressed: () => logout(context),
+              onPressed: () => logout(context,ref),
               icon: Icon(
                 Icons.logout,
                 color: Colors.deepPurple,
@@ -34,8 +45,8 @@ class Dashboard extends ConsumerWidget {
           Card(
             elevation: 5,
             child: Container(
-              height: 270,
-              width: 420,
+             height: cardHeight,
+              width: double.infinity,
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   gradient: LinearGradient(colors: [
@@ -74,13 +85,13 @@ class Dashboard extends ConsumerWidget {
                     child: account.when(
                       data: (accountList) => GridView.builder(
                         padding: const EdgeInsets.all(10),
-                        physics: NeverScrollableScrollPhysics(),
+                        //physics: NeverScrollableScrollPhysics(),
                         gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
+                            SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: 2.6,
+                          childAspectRatio: gridAspectRatio,
                         ),
                         itemCount: accountList.length < 4
                             ? accountList.length + 1
@@ -138,86 +149,8 @@ class Dashboard extends ConsumerWidget {
     );
   }
 
-  logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    if (!context.mounted) return;
-    Navigator.pushReplacementNamed(context, RouteName.loginScreen);
-  }
+
 
   
-openDialogueToAddAccount(BuildContext context,WidgetRef ref) {
-  final nameController = TextEditingController();
-  final balanceController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: Text('Add Account'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // makes dialog fit content
-            children: [
-              CustomTextFormFeild(
-                hint: 'Account name',
-                isPassword: false,
-                keyboardType: TextInputType.name,
-                validator: (value) {
-                  if(value ==null || value.trim().isEmpty) {
-                    return 'Enter name';
-                    }
-                  return null;
-                      },
-                controller: nameController,
-                
-              ),
-              SizedBox(height: 10),
-              CustomTextFormFeild(
-                controller: balanceController,
-
-                keyboardType: TextInputType.number,
-                 hint: 'Balance',
-                  isPassword: false,
-                   validator: (value) {
-                  if(value ==null || value.trim().isEmpty) {
-                    return 'Enter your balance';
-                    }
-                  return null;
-                      },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), 
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-                  if (!formKey.currentState!.validate()) {
-                    return;
-                  }
-
-              final name = nameController.text.trim();
-              final balance = double.tryParse(balanceController.text.trim()) ?? 0;
-
-              addAccount(
-                ref: ref,
-                context: context,
-                name: name,
-                balance: balance,
-              );
-            },
-            child: const Text('Add Account'),
-          )
-
-        ],
-      );
-    },
-  );
-}
 }
 

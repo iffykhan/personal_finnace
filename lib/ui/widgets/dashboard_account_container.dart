@@ -4,10 +4,10 @@ import '../../models/dashboard_page/account_model.dart';
 
 class DashboardAccountContainer extends StatelessWidget {
   final Account account;
-
   const DashboardAccountContainer({
-    super.key, required this.account,
+    super.key, required this.account
   });
+
 
   @override
   Widget build(BuildContext context) {
@@ -21,24 +21,24 @@ class DashboardAccountContainer extends StatelessWidget {
       },
       child: Container(
         padding: const EdgeInsets.all(8),
-        height: 60,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: Colors.white.withValues(alpha:0.18),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              account.name,
-              style: const TextStyle(color: Colors.white, fontSize: 15),
-            ),
-            SizedBox(height: 10,),
-            Text(
-              '\$ ${account.balance.toStringAsFixed(2)}',
-              style: const TextStyle(color: Colors.white, fontSize: 15),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                account.name,
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+              ),
+              Text(
+                '\$ ${account.balance.toStringAsFixed(2)}',
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+              ),
+            ],
+          ),
         ),
       ),
     );

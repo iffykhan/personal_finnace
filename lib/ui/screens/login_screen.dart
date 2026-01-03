@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:personal_finance/models/signup_page/signup_result_model.dart';
-import 'package:personal_finance/services/login_page/login_user_method.dart';
+import 'package:personal_finance/state/login_page/login_pressed_method.dart';
 import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import '../../providers/login_providers.dart';
+import '../../state/providers/login_providers.dart';
 import '../../routes/screen_routes.dart';
 
 class LoginScreen extends ConsumerWidget {
@@ -66,7 +65,7 @@ class LoginScreen extends ConsumerWidget {
                                 )),
                           ),
                           ElevatedButton(
-                            onPressed: () => loginPressed(ref,context),
+                            onPressed: () => loginPressed(ref,context,formKey),
                             style: ElevatedButton.styleFrom(
                                 elevation: 5,
                                 minimumSize: Size(220, 38),
@@ -137,45 +136,5 @@ class LoginScreen extends ConsumerWidget {
     return null;
   }
 
-   void loginPressed(WidgetRef ref,BuildContext context) async {
-    if (!formKey.currentState!.validate()) {
-      ref.read(loginBoxHeightProvider.notifier).state=500;
-      return;
-    }
-    final email = ref.read(emailControllerProvider);
-    final password = ref.read(passwordControllerProvider);
 
-    ref.read(loginIsloadingProvider.notifier).state=true;
-    try {
-      final SignupAndLoginResult loginResult = await loginUser(
-          email.text.trim(), password.text.trim());
-
-      if (loginResult.uid != null) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login successfully')));
-        ref.read(loginIsloadingProvider.notifier).state = false;
-        Navigator.pushReplacementNamed(
-            context, RouteName.dashboardScreen);
-      }
-      else if (loginResult.message != null) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(loginResult.message!)));
-      }
-      else {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Exception occured')));
-      }
-    }
-    catch (e){
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error ${e.toString()}')));
-    }
-    finally {
-     ref.read(loginIsloadingProvider.notifier)
-     .state = false;
-   }
-  }
 }
