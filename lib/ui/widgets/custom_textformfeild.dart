@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomTextFormFeild extends StatefulWidget {
   final TextEditingController controller;
@@ -8,6 +9,8 @@ class CustomTextFormFeild extends StatefulWidget {
   final String? Function(String?) validator;
   final Icon? prefixIcon;
   final Icon? suffixIcon;
+  final List<TextInputFormatter>? inputformatters;
+  final bool autofocus;
 
   const CustomTextFormFeild(
       {super.key,
@@ -16,6 +19,8 @@ class CustomTextFormFeild extends StatefulWidget {
       required this.isPassword,
       required this.keyboardType,
       required this.validator,
+      this.autofocus=false,
+      this.inputformatters,
       this.prefixIcon,
       this.suffixIcon});
 
@@ -39,7 +44,9 @@ class _CustomTextFormFeildState extends State<CustomTextFormFeild> {
       controller: widget.controller,
       validator: widget.validator,
       keyboardType: widget.keyboardType,
+      inputFormatters: widget.inputformatters,
       obscureText: isObscure,
+      autofocus: widget.autofocus,
       decoration: InputDecoration(
           prefixIcon: widget.prefixIcon,
           suffixIcon: widget.isPassword == true

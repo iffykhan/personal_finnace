@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:personal_finance/services/dashboard_page/add_account_method.dart';
 import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';
@@ -22,6 +23,7 @@ openDialogueToAddAccount(BuildContext context,WidgetRef ref) {
               CustomTextFormFeild(
                 hint: 'Account name',
                 isPassword: false,
+                inputformatters: [LengthLimitingTextInputFormatter(8)],
                 keyboardType: TextInputType.name,
                 validator: (value) {
                   if(value ==null || value.trim().isEmpty) {
@@ -39,6 +41,7 @@ openDialogueToAddAccount(BuildContext context,WidgetRef ref) {
                 keyboardType: TextInputType.number,
                  hint: 'Balance',
                   isPassword: false,
+                  inputformatters: [LengthLimitingTextInputFormatter(8)],
                    validator: (value) {
                   if(value ==null || value.trim().isEmpty) {
                     return 'Enter your balance';

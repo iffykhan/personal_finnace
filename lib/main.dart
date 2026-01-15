@@ -12,14 +12,13 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   FirebaseFirestore.instance.settings = const Settings(
-  persistenceEnabled: true,
-);
+    persistenceEnabled: true,
+  );
 
   runApp(ProviderScope(child: const MyApp()));
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -27,8 +26,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final FirebaseAuth auth = FirebaseAuth.instance;
-    return MaterialApp(debugShowCheckedModeBanner: false,
-     initialRoute: auth.currentUser == null ? RouteName.loginScreen : RouteName.dashboardScreen,
-     onGenerateRoute: Routes.generateRoute);
+    return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        initialRoute: auth.currentUser == null
+            ? RouteName.loginScreen
+            : RouteName.dashboardScreen,
+        onGenerateRoute: Routes.generateRoute);
   }
 }
