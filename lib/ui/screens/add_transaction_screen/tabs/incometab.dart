@@ -2,42 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:personal_finance/models/add_transaction_page/transaction_selection_model.dart';
-import 'package:personal_finance/services/add_transaction_page/add_expense_transaction_method.dart';
+import 'package:personal_finance/services/add_transaction_page/add_income_transaction_method.dart';
+import 'package:personal_finance/state/providers/add_transaction_screen_providers/income_tab_provider.dart';
 import 'package:personal_finance/state/providers/dashboard_providers.dart';
 import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';
-import 'package:personal_finance/state/providers/add_transaction_screen_providers/expense_tab_provider.dart';
 
-class ExpenseTab extends ConsumerWidget {
-  const ExpenseTab({super.key});
+class Incometab extends ConsumerWidget {
+  const Incometab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final amount = ref.watch(textEditingControllerProvider);
+    final amount = ref.watch(textEditingControllerProviderOfIncome);
     final formkey = GlobalKey<FormState>();
-    final transactionSelection = ref.watch(transactionSelectionProvider);
+    final transactionSelection = ref.watch(transactionSelectionProviderOfIncome);
     final List<String> categoryList = [
-      'Food & Drinks',
-      'Housing',
-      'Transportation',
-      'Shopping',
-      'Health & Fitness',
-      'Entertainment',
-      'Education',
-      'Personal Care',
-      'Financial',
-      'Miscellaneous',
+      'Salary',
+      'Business',
+      'Freelance',
+      'Bonus',
+      'Investment',
+      'Rental Income',
+      'Interest',
+      'Commission',
+      'Gift',
+      'Refund',
+      'Other',
     ];
     final account = ref.watch(accountStreamProvider);
     return account.when(
         data: (account) {
           final accountList = account.map((account) => account.name).toList();
+
           return Center(
               child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
                 Form(
-                  key: formkey,
+                  key:formkey,
                   child: CustomTextFormFeild(
                       controller: amount,
                       autofocus: true,
@@ -63,10 +65,8 @@ class ExpenseTab extends ConsumerWidget {
                                 WidgetStateProperty.all<Color>(Colors.white)),
                         onPressed: () {
                           if(!formkey.currentState!.validate()) return;
-                          final selection =
-                              ref.read(transactionSelectionProvider);
-                          addExpenseTransaction(
-                              selection.account, selection.category,amount.text,context);
+                          final selection= ref.read(transactionSelectionProviderOfIncome);
+                          addIncomeTransaction(selection.account, selection.category, amount.text, context);
                         },
                         child: Text('Add transaction'))),
                 Row(
@@ -76,10 +76,8 @@ class ExpenseTab extends ConsumerWidget {
                       builder:
                           (BuildContext context, WidgetRef ref, Widget? child) {
                         return TextButton(
-                            onPressed: () {
-                              accountClicked(context, accountList,
-                                  transactionSelection, ref);
-                            },
+                            onPressed: () => accountClicked(context,
+                                accountList, transactionSelection, ref),
                             child: Column(
                               children: [
                                 Text('Account'),
@@ -95,10 +93,8 @@ class ExpenseTab extends ConsumerWidget {
                       builder:
                           (BuildContext context, WidgetRef ref, Widget? child) {
                         return TextButton(
-                            onPressed: () {
-                              categoryClicked(context, categoryList,
-                                  transactionSelection, ref);
-                            },
+                            onPressed: () => categoryClicked(context,
+                                categoryList, transactionSelection, ref),
                             child: Column(
                               children: [
                                 Text('Category'),
@@ -131,7 +127,7 @@ class ExpenseTab extends ConsumerWidget {
     return null;
   }
 
-  void categoryClicked(BuildContext context, List<String> categoryList,
+  void categoryClicked(BuildContext context, List categoryList,
       TransactionSelection transactionSelection, WidgetRef ref) {
     showDialog(
         context: context,
@@ -148,7 +144,7 @@ class ExpenseTab extends ConsumerWidget {
                   return ListTile(
                     title: Text(category),
                     onTap: () {
-                      ref.read(transactionSelectionProvider.notifier).state =
+                      ref.read(transactionSelectionProviderOfIncome.notifier).state =
                           transactionSelection.copyWith(category: category);
                       Navigator.pop(context, category);
                     },
@@ -176,7 +172,7 @@ class ExpenseTab extends ConsumerWidget {
                     return ListTile(
                       title: Text(account),
                       onTap: () {
-                        ref.read(transactionSelectionProvider.notifier).state =
+                        ref.read(transactionSelectionProviderOfIncome.notifier).state =
                             transactionSelection.copyWith(account: account);
                         Navigator.pop(context, account);
                       },

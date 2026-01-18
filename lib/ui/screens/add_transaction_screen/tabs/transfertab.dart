@@ -1,36 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:personal_finance/models/add_transaction_page/transaction_selection_model.dart';
-import 'package:personal_finance/services/add_transaction_page/add_expense_transaction_method.dart';
+import 'package:personal_finance/models/dashboard_page/account_model.dart';
+import 'package:personal_finance/services/add_transaction_page/add_transfer_transaction_method.dart';
+import 'package:personal_finance/state/providers/add_transaction_screen_providers/income_tab_provider.dart';
+import 'package:personal_finance/state/providers/add_transaction_screen_providers/transfer_tab_provider.dart';
 import 'package:personal_finance/state/providers/dashboard_providers.dart';
 import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';
-import 'package:personal_finance/state/providers/add_transaction_screen_providers/expense_tab_provider.dart';
 
-class ExpenseTab extends ConsumerWidget {
-  const ExpenseTab({super.key});
+class TransferTab extends ConsumerWidget {
+  const TransferTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final amount = ref.watch(textEditingControllerProvider);
+    final amount = ref.watch(textEditingControllerProviderOfIncome);
     final formkey = GlobalKey<FormState>();
-    final transactionSelection = ref.watch(transactionSelectionProvider);
-    final List<String> categoryList = [
-      'Food & Drinks',
-      'Housing',
-      'Transportation',
-      'Shopping',
-      'Health & Fitness',
-      'Entertainment',
-      'Education',
-      'Personal Care',
-      'Financial',
-      'Miscellaneous',
-    ];
+    final transactionSelectionOfSenderAccount =
+        ref.watch(transactionSelectionProviderOfSenderAccount);
+    final transactionSelectionOfRecieverAccount =
+        ref.watch(transactionSelectionProviderOfReceiverAccount);
+
     final account = ref.watch(accountStreamProvider);
     return account.when(
         data: (account) {
-          final accountList = account.map((account) => account.name).toList();
+          final accountList = account.map((account) => account).toList();
+
           return Center(
               child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -62,11 +56,33 @@ class ExpenseTab extends ConsumerWidget {
                             foregroundColor:
                                 WidgetStateProperty.all<Color>(Colors.white)),
                         onPressed: () {
-                          if(!formkey.currentState!.validate()) return;
-                          final selection =
-                              ref.read(transactionSelectionProvider);
-                          addExpenseTransaction(
-                              selection.account, selection.category,amount.text,context);
+                          if (!formkey.currentState!.validate()) return;
+                          if (transactionSelectionOfRecieverAccount==null||
+                              transactionSelectionOfSenderAccount==null
+                                ) {
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Accounts required'),
+                                    content: const Text(
+                                        'You must select sender and reciever accounts to continue.'),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: Text('Ok'))
+                                    ],
+                                  );
+                                });
+                  
+                          }
+                          addTransferTransaction(
+                            transactionSelectionOfSenderAccount!,
+                            transactionSelectionOfRecieverAccount!,
+                            amount.text,
+                            context,
+                          );
                         },
                         child: Text('Add transaction'))),
                 Row(
@@ -76,15 +92,14 @@ class ExpenseTab extends ConsumerWidget {
                       builder:
                           (BuildContext context, WidgetRef ref, Widget? child) {
                         return TextButton(
-                            onPressed: () {
-                              accountClicked(context, accountList,
-                                  transactionSelection, ref);
-                            },
+                            onPressed: () =>
+                                senderAccountClicked(context, accountList, ref),
                             child: Column(
                               children: [
-                                Text('Account'),
+                                Text('Sender Account'),
                                 Text(
-                                  transactionSelection.account,
+                                  transactionSelectionOfSenderAccount?.name ??
+                                      'Select sender Account',
                                   style: TextStyle(color: Colors.black),
                                 )
                               ],
@@ -95,15 +110,14 @@ class ExpenseTab extends ConsumerWidget {
                       builder:
                           (BuildContext context, WidgetRef ref, Widget? child) {
                         return TextButton(
-                            onPressed: () {
-                              categoryClicked(context, categoryList,
-                                  transactionSelection, ref);
-                            },
+                            onPressed: () => recieverAccountClicked(
+                                context, accountList, ref),
                             child: Column(
                               children: [
-                                Text('Category'),
+                                Text('Reciever Account'),
                                 Text(
-                                  transactionSelection.category,
+                                  transactionSelectionOfRecieverAccount?.name ??
+                                      'Select receiever Account',
                                   style: TextStyle(color: Colors.black),
                                 )
                               ],
@@ -131,8 +145,8 @@ class ExpenseTab extends ConsumerWidget {
     return null;
   }
 
-  void categoryClicked(BuildContext context, List<String> categoryList,
-      TransactionSelection transactionSelection, WidgetRef ref) {
+  void recieverAccountClicked(
+      BuildContext context, List<Account> accountList, WidgetRef ref) {
     showDialog(
         context: context,
         builder: (context) {
@@ -144,13 +158,15 @@ class ExpenseTab extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: Column(
-                    children: categoryList.map((category) {
+                    children: accountList.map((account) {
                   return ListTile(
-                    title: Text(category),
+                    title: Text(account.name),
                     onTap: () {
-                      ref.read(transactionSelectionProvider.notifier).state =
-                          transactionSelection.copyWith(category: category);
-                      Navigator.pop(context, category);
+                      ref
+                          .read(transactionSelectionProviderOfReceiverAccount
+                              .notifier)
+                          .state = account;
+                      Navigator.pop(context, account);
                     },
                   );
                 }).toList()),
@@ -160,8 +176,8 @@ class ExpenseTab extends ConsumerWidget {
         });
   }
 
-  void accountClicked(BuildContext context, List<String> accountList,
-      TransactionSelection transactionSelection, WidgetRef ref) {
+  void senderAccountClicked(
+      BuildContext context, List<Account> accountList, WidgetRef ref) {
     showDialog(
         context: context,
         builder: (context) {
@@ -174,10 +190,12 @@ class ExpenseTab extends ConsumerWidget {
                 child: Column(
                   children: accountList.map((account) {
                     return ListTile(
-                      title: Text(account),
+                      title: Text(account.name),
                       onTap: () {
-                        ref.read(transactionSelectionProvider.notifier).state =
-                            transactionSelection.copyWith(account: account);
+                        ref
+                            .read(transactionSelectionProviderOfSenderAccount
+                                .notifier)
+                            .state = account;
                         Navigator.pop(context, account);
                       },
                     );

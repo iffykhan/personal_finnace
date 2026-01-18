@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:personal_finance/models/add_transaction_page/transaction_selection_model.dart';
 
 
-final transactionSelectionProvider = StateProvider.autoDispose<TransactionSelection>((ref){
+final transactionSelectionProviderOfIncome = StateProvider.autoDispose<TransactionSelection>((ref){
   return TransactionSelection(account: 'Select an account', category: 'Select a Category');
 });
 
-final textEditingControllerProvider = Provider.autoDispose<TextEditingController>((ref){
+final textEditingControllerProviderOfIncome = Provider.autoDispose<TextEditingController>((ref){
   return TextEditingController();
 });
