@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:personal_finance/models/add_transaction_page/transaction_selection_model.dart';
+import 'package:personal_finance/models/dashboard_page/account_model.dart';
 import 'package:personal_finance/services/add_transaction_page/add_income_transaction_method.dart';
 import 'package:personal_finance/state/providers/add_transaction_screen_providers/income_tab_provider.dart';
 import 'package:personal_finance/state/providers/dashboard_providers.dart';
+import 'package:personal_finance/ui/widgets/add_transaction_screen_dialogue.dart';
 import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';
 
 class Incometab extends ConsumerWidget {
@@ -12,9 +13,12 @@ class Incometab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final amount = ref.watch(textEditingControllerProviderOfIncome);
+    final amountController = ref.watch(textEditingControllerProviderOfIncome);
     final formkey = GlobalKey<FormState>();
-    final transactionSelection = ref.watch(transactionSelectionProviderOfIncome);
+    final Account? selectedAccount = ref.watch(accountIncomeProvider);
+    final String? selectedCategory = ref.watch(categoryIncomeProvider);
+    final isLoading = ref.watch(isLoadingIncomeProvider);
+
     final List<String> categoryList = [
       'Salary',
       'Business',
@@ -31,17 +35,16 @@ class Incometab extends ConsumerWidget {
     final account = ref.watch(accountStreamProvider);
     return account.when(
         data: (account) {
-          final accountList = account.map((account) => account.name).toList();
-
+          final accountList = account.map((account) => account).toList();
           return Center(
               child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
                 Form(
-                  key:formkey,
+                  key: formkey,
                   child: CustomTextFormFeild(
-                      controller: amount,
+                      controller: amountController,
                       autofocus: true,
                       inputformatters: [
                         FilteringTextInputFormatter.digitsOnly,
@@ -63,12 +66,90 @@ class Incometab extends ConsumerWidget {
                                 Colors.deepPurple),
                             foregroundColor:
                                 WidgetStateProperty.all<Color>(Colors.white)),
-                        onPressed: () {
-                          if(!formkey.currentState!.validate()) return;
-                          final selection= ref.read(transactionSelectionProviderOfIncome);
-                          addIncomeTransaction(selection.account, selection.category, amount.text, context);
-                        },
-                        child: Text('Add transaction'))),
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                if (!formkey.currentState!.validate()) return;
+                                if (selectedAccount == null ||
+                                    selectedCategory == null ||
+                                    selectedAccount.name ==
+                                        'Select an account' ||
+                                    selectedCategory == 'Select a Category') {
+                                  await showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Selection required'),
+                                      content: const Text(
+                                          'Please select both an account and a category.'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('OK'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  return;
+                                }
+                                final parsedAmount =
+                                    int.tryParse(amountController.text);
+                                if (parsedAmount == null || parsedAmount <= 0) {
+                                  await showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Invalid amount'),
+                                      content: const Text(
+                                          'Please enter a valid amount (> 0).'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('OK'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  return;
+                                }
+                                ref
+                                    .read(isLoadingIncomeProvider.notifier)
+                                    .state = true;
+                                try {
+                                  await addIncomeTransaction(
+                                    selectedAccount,
+                                    selectedCategory,
+                                    parsedAmount,
+                                    context,
+                                  );
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Transaction successfully added')));
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content:
+                                              Text('Transaction failed: $e')),
+                                    );
+                                  }
+                                } finally {
+                                  ref
+                                      .read(isLoadingIncomeProvider.notifier)
+                                      .state = false;
+                                }
+                              },
+                        child: isLoading
+                            ? SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : Text('Add Income'))),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -76,13 +157,15 @@ class Incometab extends ConsumerWidget {
                       builder:
                           (BuildContext context, WidgetRef ref, Widget? child) {
                         return TextButton(
-                            onPressed: () => accountClicked(context,
-                                accountList, transactionSelection, ref),
+                            onPressed: isLoading
+                                ? null
+                                : () =>
+                                    accountClicked(context, accountList, ref),
                             child: Column(
                               children: [
                                 Text('Account'),
                                 Text(
-                                  transactionSelection.account,
+                                  selectedAccount?.name ?? 'Select account',
                                   style: TextStyle(color: Colors.black),
                                 )
                               ],
@@ -93,13 +176,15 @@ class Incometab extends ConsumerWidget {
                       builder:
                           (BuildContext context, WidgetRef ref, Widget? child) {
                         return TextButton(
-                            onPressed: () => categoryClicked(context,
-                                categoryList, transactionSelection, ref),
+                            onPressed: isLoading
+                                ? null
+                                : () =>
+                                    categoryClicked(context, categoryList, ref),
                             child: Column(
                               children: [
                                 Text('Category'),
                                 Text(
-                                  transactionSelection.category,
+                                  selectedCategory ?? 'Select category',
                                   style: TextStyle(color: Colors.black),
                                 )
                               ],
@@ -127,61 +212,87 @@ class Incometab extends ConsumerWidget {
     return null;
   }
 
-  void categoryClicked(BuildContext context, List categoryList,
-      TransactionSelection transactionSelection, WidgetRef ref) {
+  void categoryClicked(
+      BuildContext context, List<String> categoryList, WidgetRef ref) {
     showDialog(
         context: context,
         builder: (context) {
-          return SingleChildScrollView(
-            child: Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadiusGeometry.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                    children: categoryList.map((category) {
-                  return ListTile(
-                    title: Text(category),
-                    onTap: () {
-                      ref.read(transactionSelectionProviderOfIncome.notifier).state =
-                          transactionSelection.copyWith(category: category);
-                      Navigator.pop(context, category);
-                    },
-                  );
-                }).toList()),
-              ),
-            ),
+          return AddTransactionScreenDialogue<String>(
+            list: categoryList,
+            label: (category) {
+              return category;
+            },
+            onSelect: (category) {
+              ref.read(categoryIncomeProvider.notifier).state = category;
+            },
           );
+          // return SingleChildScrollView(
+          //   child: Dialog(
+          //     shape: RoundedRectangleBorder(
+          //       borderRadius: BorderRadiusGeometry.circular(12),
+          //     ),
+          //     child: Padding(
+          //       padding: const EdgeInsets.all(8),
+          //       child: Column(
+          //           children: categoryList.map((category) {
+          //         return ListTile(
+          //           title: Text(category),
+          //           onTap: () {
+          //             ref.read(categoryIncomeProvider.notifier).state =
+          //                 category;
+          //             Navigator.pop(context, category);
+          //           },
+          //         );
+          //       }).toList()),
+          //     ),
+          //   ),
+          // );
         });
   }
 
-  void accountClicked(BuildContext context, List<String> accountList,
-      TransactionSelection transactionSelection, WidgetRef ref) {
+  void accountClicked(
+      BuildContext context, List<Account> accountList, WidgetRef ref) {
     showDialog(
         context: context,
         builder: (context) {
-          return SingleChildScrollView(
-            child: Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadiusGeometry.circular(12)),
+          if (accountList.isEmpty) {
+            return Dialog(
               child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  children: accountList.map((account) {
-                    return ListTile(
-                      title: Text(account),
-                      onTap: () {
-                        ref.read(transactionSelectionProviderOfIncome.notifier).state =
-                            transactionSelection.copyWith(account: account);
-                        Navigator.pop(context, account);
-                      },
-                    );
-                  }).toList(),
-                ),
+                padding: const EdgeInsets.all(8.0),
+                child: Text('No account available please add account first'),
               ),
-            ),
-          );
+            );
+          } else {
+            return AddTransactionScreenDialogue<Account>(
+                list: accountList,
+                label: (account) {
+                  return account.name;
+                },
+                onSelect: (account) {
+                  ref.read(accountIncomeProvider.notifier).state = account;
+                });
+          }
+          // return SingleChildScrollView(
+          //   child: Dialog(
+          //     shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadiusGeometry.circular(12)),
+          //     child: Padding(
+          //       padding: const EdgeInsets.all(8),
+          //       child: Column(
+          //         children: accountList.map((account) {
+          //           return ListTile(
+          //             title: Text(account.name),
+          //             onTap: () {
+          //               ref.read(accountIncomeProvider.notifier).state =
+          //                   account;
+          //               Navigator.pop(context, account);
+          //             },
+          //           );
+          //         }).toList(),
+          //       ),
+          //     ),
+          //   ),
+          // );
         });
   }
 }

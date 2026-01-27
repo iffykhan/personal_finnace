@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:personal_finance/models/dashboard_page/account_model.dart';
 import 'package:personal_finance/services/add_transaction_page/add_transfer_transaction_method.dart';
-import 'package:personal_finance/state/providers/add_transaction_screen_providers/income_tab_provider.dart';
 import 'package:personal_finance/state/providers/add_transaction_screen_providers/transfer_tab_provider.dart';
 import 'package:personal_finance/state/providers/dashboard_providers.dart';
+import 'package:personal_finance/ui/widgets/add_transaction_screen_dialogue.dart';
 import 'package:personal_finance/ui/widgets/custom_textformfeild.dart';
 
 class TransferTab extends ConsumerWidget {
@@ -13,12 +13,14 @@ class TransferTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final amount = ref.watch(textEditingControllerProviderOfIncome);
+    final amount = ref.watch(textEditingControllerProviderOfTransfer);
     final formkey = GlobalKey<FormState>();
     final transactionSelectionOfSenderAccount =
         ref.watch(transactionSelectionProviderOfSenderAccount);
     final transactionSelectionOfRecieverAccount =
         ref.watch(transactionSelectionProviderOfReceiverAccount);
+
+    final isLoading = ref.watch(isLoadingTransferProvider);
 
     final account = ref.watch(accountStreamProvider);
     return account.when(
@@ -55,36 +57,74 @@ class TransferTab extends ConsumerWidget {
                                 Colors.deepPurple),
                             foregroundColor:
                                 WidgetStateProperty.all<Color>(Colors.white)),
-                        onPressed: () {
-                          if (!formkey.currentState!.validate()) return;
-                          if (transactionSelectionOfRecieverAccount==null||
-                              transactionSelectionOfSenderAccount==null
-                                ) {
-                            showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: const Text('Accounts required'),
-                                    content: const Text(
-                                        'You must select sender and reciever accounts to continue.'),
-                                    actions: [
-                                      TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context),
-                                          child: Text('Ok'))
-                                    ],
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                if (!formkey.currentState!.validate()) return;
+                                if (transactionSelectionOfRecieverAccount ==
+                                        null ||
+                                    transactionSelectionOfSenderAccount ==
+                                        null ||
+                                    transactionSelectionOfRecieverAccount
+                                            .name ==
+                                        transactionSelectionOfSenderAccount
+                                            .name) {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title:
+                                              const Text('Accounts required'),
+                                          content: const Text(
+                                              'Select a sender and a receiver account to continue. Sender and receiver must be different accounts.'),
+                                          actions: [
+                                            TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: Text('Ok'))
+                                          ],
+                                        );
+                                      });
+                                  return;
+                                }
+                                ref
+                                    .read(isLoadingTransferProvider.notifier)
+                                    .state = true;
+                                try {
+                                  await addTransferTransaction(
+                                    transactionSelectionOfSenderAccount,
+                                    transactionSelectionOfRecieverAccount,
+                                    int.parse(amount.text),
+                                    context,
                                   );
-                                });
-                  
-                          }
-                          addTransferTransaction(
-                            transactionSelectionOfSenderAccount!,
-                            transactionSelectionOfRecieverAccount!,
-                            amount.text,
-                            context,
-                          );
-                        },
-                        child: Text('Add transaction'))),
+
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Transaction successfully added')));
+
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content:
+                                              Text('Transaction failed: $e')));
+                                } finally {
+                                  ref
+                                      .read(isLoadingTransferProvider.notifier)
+                                      .state = false;
+                                }
+                              },
+                        child: isLoading
+                            ? SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : Text('Add transaction'))),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -92,11 +132,13 @@ class TransferTab extends ConsumerWidget {
                       builder:
                           (BuildContext context, WidgetRef ref, Widget? child) {
                         return TextButton(
-                            onPressed: () =>
-                                senderAccountClicked(context, accountList, ref),
+                            onPressed: isLoading
+                                ? null
+                                : () => senderAccountClicked(
+                                    context, accountList, ref),
                             child: Column(
                               children: [
-                                Text('Sender Account'),
+                                Text('Sender'),
                                 Text(
                                   transactionSelectionOfSenderAccount?.name ??
                                       'Select sender Account',
@@ -110,11 +152,13 @@ class TransferTab extends ConsumerWidget {
                       builder:
                           (BuildContext context, WidgetRef ref, Widget? child) {
                         return TextButton(
-                            onPressed: () => recieverAccountClicked(
-                                context, accountList, ref),
+                            onPressed: isLoading
+                                ? null
+                                : () => recieverAccountClicked(
+                                    context, accountList, ref),
                             child: Column(
                               children: [
-                                Text('Reciever Account'),
+                                Text('Reciever'),
                                 Text(
                                   transactionSelectionOfRecieverAccount?.name ??
                                       'Select receiever Account',
@@ -150,29 +194,47 @@ class TransferTab extends ConsumerWidget {
     showDialog(
         context: context,
         builder: (context) {
-          return SingleChildScrollView(
-            child: Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadiusGeometry.circular(12),
-              ),
+          if (accountList.isEmpty) {
+            return Dialog(
               child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                    children: accountList.map((account) {
-                  return ListTile(
-                    title: Text(account.name),
-                    onTap: () {
-                      ref
-                          .read(transactionSelectionProviderOfReceiverAccount
-                              .notifier)
-                          .state = account;
-                      Navigator.pop(context, account);
-                    },
-                  );
-                }).toList()),
+                padding: const EdgeInsets.all(8.0),
+                child: Text('No account available please add account first'),
               ),
-            ),
-          );
+            );
+          } else {
+            return AddTransactionScreenDialogue<Account>(
+                list: accountList,
+                label: (account) => account.name,
+                onSelect: (account) {
+                  ref
+                      .read(transactionSelectionProviderOfReceiverAccount
+                          .notifier)
+                      .state = account;
+                });
+          }
+          // return SingleChildScrollView(
+          //   child: Dialog(
+          //     shape: RoundedRectangleBorder(
+          //       borderRadius: BorderRadiusGeometry.circular(12),
+          //     ),
+          //     child: Padding(
+          //       padding: const EdgeInsets.all(8),
+          //       child: Column(
+          //           children: accountList.map((account) {
+          //         return ListTile(
+          //           title: Text(account.name),
+          //           onTap: () {
+          //             ref
+          //                 .read(transactionSelectionProviderOfReceiverAccount
+          //                     .notifier)
+          //                 .state = account;
+          //             Navigator.pop(context, account);
+          //           },
+          //         );
+          //       }).toList()),
+          //     ),
+          //   ),
+          // );
         });
   }
 
@@ -181,29 +243,47 @@ class TransferTab extends ConsumerWidget {
     showDialog(
         context: context,
         builder: (context) {
-          return SingleChildScrollView(
-            child: Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadiusGeometry.circular(12)),
+          if (accountList.isEmpty) {
+            return Dialog(
               child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  children: accountList.map((account) {
-                    return ListTile(
-                      title: Text(account.name),
-                      onTap: () {
-                        ref
-                            .read(transactionSelectionProviderOfSenderAccount
-                                .notifier)
-                            .state = account;
-                        Navigator.pop(context, account);
-                      },
-                    );
-                  }).toList(),
-                ),
+                padding: const EdgeInsets.all(8.0),
+                child: Text('No account available please add account first'),
               ),
-            ),
-          );
+            );
+          } else {
+            return AddTransactionScreenDialogue<Account>(
+                list: accountList,
+                label: (account) => account.name,
+                onSelect: (account) {
+                  ref
+                      .read(
+                          transactionSelectionProviderOfSenderAccount.notifier)
+                      .state = account;
+                });
+          }
+          // return SingleChildScrollView(
+          //   child: Dialog(
+          //     shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadiusGeometry.circular(12)),
+          //     child: Padding(
+          //       padding: const EdgeInsets.all(8),
+          //       child: Column(
+          //         children: accountList.map((account) {
+          //           return ListTile(
+          //             title: Text(account.name),
+          //             onTap: () {
+          //               ref
+          //                   .read(transactionSelectionProviderOfSenderAccount
+          //                       .notifier)
+          //                   .state = account;
+          //               Navigator.pop(context, account);
+          //             },
+          //           );
+          //         }).toList(),
+          //       ),
+          //     ),
+          //   ),
+          // );
         });
   }
 }

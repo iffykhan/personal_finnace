@@ -9,7 +9,7 @@ class Account {
     required this.balance,
   });
 
-  /// Factory constructor to create Account from Firestore map
+
   factory Account.fromMap(Map<String, dynamic> map, {required String id}) {
     return Account(
       id: id,

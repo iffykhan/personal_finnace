@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:personal_finance/models/add_transaction_page/transaction_selection_model.dart';
+import 'package:personal_finance/models/dashboard_page/account_model.dart';
 
-
-final transactionSelectionProvider = StateProvider.autoDispose<TransactionSelection>((ref){
-  return TransactionSelection(account: 'Select an account', category: 'Select a Category');
+final isLoadingExpenseProvider = StateProvider<bool>((ref){
+  return false;
 });
 
-final textEditingControllerProvider = Provider.autoDispose<TextEditingController>((ref){
+
+final categoryExpenseProvider = StateProvider.autoDispose<String>((ref){
+  return 'Select a Category';
+});
+
+final accountExpenseProvider =
+    StateProvider.autoDispose<Account?>((ref) => null);
+
+final textEditingControllerProviderOfExpense = Provider.autoDispose<TextEditingController>((ref){
   return TextEditingController();
 });
