@@ -10,7 +10,7 @@ class Account {
   });
 
 
-  factory Account.fromMap(Map<String, dynamic> map, {required String id}) {
+  factory Account.fromFirebase(Map<String, dynamic> map, {required String id}) {
     return Account(
       id: id,
       name: map['name'] as String,
@@ -18,7 +18,7 @@ class Account {
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toFirebase() {
     return {
       'name': name,
       'balance': balance,

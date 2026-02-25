@@ -11,9 +11,9 @@ Future<SignupAndLoginResult> loginUser(String email,String password) async {
     if(user == null){
       return SignupAndLoginResult(message: 'Unable to login, database was unable to provide the login information');
     }
+
     return SignupAndLoginResult(uid: user.uid);
     // Return uid if successfully login
-
 
 
   } on FirebaseAuthException catch (e){

@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 final accountStreamProvider = StreamProvider<List<Account>>((ref) {
   final uid = FirebaseAuth.instance.currentUser?.uid;
-  //(if condition) is used because when logout is pressed and then try to login the uid is empty
+  //(if condition) is used because when logout is pressed then try to login the uid is empty
   if(uid == null){
     return const Stream<List<Account>>.empty();
   }
@@ -16,7 +16,7 @@ final accountStreamProvider = StreamProvider<List<Account>>((ref) {
       .snapshots()
       .map((snapshot) =>
           snapshot.docs.map((doc) =>
-           Account.fromMap(doc.data(), id: doc.id)).toList());
+           Account.fromFirebase(doc.data(), id: doc.id)).toList());
 });
 
 
